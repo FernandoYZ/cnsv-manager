@@ -1,26 +1,25 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
     volumes:
-      - .:/var/www/html
+      - .:/var/www/html:rw
     environment:
       - DB_HOST=database
       - REDIS_HOST=redis
-    depends_on:
-      - database
-      - redis
+    networks:
+      - laravel_network
 
   webserver:
     image: nginx:alpine
     ports:
       - "8000:80"
     volumes:
-      - .:/var/www/html
+      - .:/var/www/html:rw
       - ./docker/nginx:/etc/nginx/conf.d
+    networks:
+      - laravel_network
     depends_on:
       - app
 
@@ -32,12 +31,20 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - laravel_network
 
   redis:
     image: redis:alpine
     volumes:
       - redis_data:/data
+    networks:
+      - laravel_network
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  laravel_network:
+    driver: bridge
